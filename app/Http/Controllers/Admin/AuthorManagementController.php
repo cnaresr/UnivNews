@@ -24,7 +24,7 @@ class AuthorManagementController extends Controller
             ->latest('author_applied_at')
             ->get();
 
-        $activeAuthors = User::with('university')
+        $activeAuthors = User::with(['university', 'approvalToken'])
             ->withCount('articles')
             ->whereIn('role', [User::ROLE_AUTHOR, User::ROLE_ADMIN])
             ->latest()
@@ -86,6 +86,28 @@ class AuthorManagementController extends Controller
         ]);
 
         return back()->with('success', "Akun author {$user->name} telah ditangguhkan.");
+    }
+
+    /**
+     * Cancel author approval for a user who has not yet completed password creation & verification.
+     */
+    public function cancelApproval(User $user): RedirectResponse
+    {
+        if (!$user->approvalToken) {
+            return back()->with('error', 'Cannot cancel approval: This user has already completed account setup or does not have a pending approval token.');
+        }
+
+        // Delete the approval token
+        $user->approvalToken()->delete();
+
+        // Revert user to reader role and reset author status
+        $user->update([
+            'role'                     => User::ROLE_PUBLIC,
+            'author_status'            => User::STATUS_NONE,
+            'author_rejection_reason'  => 'Approval cancelled by administrator before password setup.',
+        ]);
+
+        return back()->with('success', "Approval for {$user->name} has been cancelled. The user has been reverted to Reader.");
     }
 
     /**

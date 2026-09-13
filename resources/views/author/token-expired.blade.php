@@ -3,7 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Link Kadaluarsa — University News</title>
+    <title>Link Expired — University News</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23B71032'/><text x='50' y='50' font-family='sans-serif' font-weight='bold' font-size='70' fill='white' dominant-baseline='central' text-anchor='middle'>U</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,6 +17,19 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-center items-center py-12 px-4 bg-[#fcf8f9] text-[#1b1b1c]">
+
+    <!-- Brand Logo Header -->
+    <div class="max-w-md w-full mb-6 flex items-center justify-center">
+        <a href="{{ route('home') }}" class="inline-flex items-center space-x-2.5 group">
+            <div class="bg-crimson text-white w-9 h-9 flex items-center justify-center font-heading font-bold text-xl rounded shadow transition-transform group-hover:scale-105">
+                U
+            </div>
+            <span class="font-heading font-bold text-xl tracking-tight text-[#00081e]">
+                University<span class="font-normal text-gray-500">News</span>
+            </span>
+        </a>
+    </div>
+
     <div class="max-w-md w-full bg-white border border-[#c5c6cf] p-10 shadow-sm">
 
         <div class="flex justify-center mb-6">
@@ -26,8 +42,8 @@
         </div>
 
         <div class="text-center mb-6">
-            <h1 class="text-xl font-bold font-heading text-[#00081e]">Link Aktivasi Kadaluarsa</h1>
-            <p class="text-xs text-gray-500 mt-2">Link set password kamu sudah tidak berlaku (expired).</p>
+            <h1 class="text-xl font-bold font-heading text-[#00081e]">Activation Link Expired</h1>
+            <p class="text-xs text-gray-500 mt-2">Your password setup link is no longer valid.</p>
         </div>
 
         @if(session('success'))
@@ -45,14 +61,14 @@
         @endif
 
         <p class="text-sm text-gray-600 text-center mb-6">
-            Masukkan email kamu untuk mendapatkan link aktivasi baru (berlaku 48 jam).
+            Enter your email to receive a new activation link (valid for 48 hours).
         </p>
 
         <form method="POST" action="{{ route('author.set-password.resend') }}" class="space-y-4">
             @csrf
             <div>
                 <label for="email" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                    Email Akun Author
+                    Author Account Email
                 </label>
                 <input type="email"
                        name="email"
@@ -64,13 +80,13 @@
             </div>
             <button type="submit"
                     class="w-full py-2.5 bg-[#00081e] hover:bg-[#8b1528] text-white text-xs font-bold uppercase tracking-wider transition-colors">
-                Kirim Ulang Link Aktivasi
+                Resend Activation Link
             </button>
         </form>
 
         <div class="mt-6 pt-4 border-t border-gray-100 text-center">
             <a href="{{ route('home') }}" class="text-xs text-gray-400 hover:text-gray-600 underline">
-                &larr; Kembali ke Portal
+                &larr; Back to Portal
             </a>
         </div>
     </div>

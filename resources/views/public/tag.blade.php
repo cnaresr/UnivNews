@@ -59,9 +59,9 @@
                 <!-- Empty State -->
                 <div class="flex flex-col items-center justify-center h-64 text-center border border-[#C5C6CF] border-dashed rounded-lg bg-gray-50">
                     <svg class="w-12 h-12 text-[#C5C6CF] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                    <p class="text-[#44464E] font-medium font-sans mb-1">Belum ada artikel dengan tag "{{ $tag->name }}"</p>
-                    <p class="text-[#C5C6CF] text-sm font-sans">Coba jelajahi tag lainnya atau kembali ke beranda.</p>
-                    <a href="{{ route('home') }}" class="mt-4 text-crimson text-sm font-bold uppercase tracking-wider hover:underline">Kembali ke Beranda</a>
+                    <p class="text-[#44464E] font-medium font-sans mb-1">No articles found with tag "{{ $tag->name }}"</p>
+                    <p class="text-[#C5C6CF] text-sm font-sans">Try exploring other tags or return to the homepage.</p>
+                    <a href="{{ route('home') }}" class="mt-4 text-crimson text-sm font-bold uppercase tracking-wider hover:underline">Back to Home</a>
                 </div>
                 @endif
             </div>
@@ -71,7 +71,7 @@
                 
                 <!-- Tag Cloud -->
                 <div class="bg-[#F0EDEE] p-6 rounded-lg">
-                    <h4 class="font-heading font-bold text-[22px] text-[#00081E] mb-6 border-b border-[#C5C6CF] pb-2">Semua Tags</h4>
+                    <h4 class="font-heading font-bold text-[22px] text-[#00081E] mb-6 border-b border-[#C5C6CF] pb-2">All Tags</h4>
                     <div class="flex flex-wrap gap-2">
                         @php
                             $allTags = \App\Models\Tag::withCount(['articles' => function($q) {

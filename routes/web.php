@@ -134,6 +134,7 @@ Route::prefix('admin')->middleware(['role:admin'])->name('admin.')->group(functi
     Route::post('/authors/{user}/approve', [Admin\AuthorManagementController::class, 'approve'])->name('authors.approve');
     Route::post('/authors/{user}/reject', [Admin\AuthorManagementController::class, 'reject'])->name('authors.reject');
     Route::post('/authors/{user}/suspend', [Admin\AuthorManagementController::class, 'suspend'])->name('authors.suspend');
+    Route::post('/authors/{user}/cancel-approval', [Admin\AuthorManagementController::class, 'cancelApproval'])->name('authors.cancel-approval');
     Route::delete('/authors/{user}', [Admin\AuthorManagementController::class, 'destroy'])->name('authors.destroy');
 
     // University Management
@@ -180,3 +181,26 @@ Route::post('/author/set-password/resend', [Author\SetPasswordController::class,
 // Endpoint ini dipanggil oleh server Mayar (bukan browser), sehingga tidak pakai session/CSRF.
 Route::post('/webhooks/mayar', [WebhookController::class, 'handleMayar'])->name('webhooks.mayar');
 Route::post('/webhooks/mayar/boost', [WebhookController::class, 'handleMayarBoost'])->name('webhooks.mayar.boost');
+
+// 10. Fallback Storage Route
+// Ensures public storage files are always served even if symlinks are disabled or unsupported
+Route::get('/storage/{path}', function (string $path) {
+    $filePath = storage_path('app/public/' . $path);
+    if (!file_exists($filePath)) {
+        abort(404);
+    }
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    $mimeType = match ($ext) {
+        'jpg', 'jpeg' => 'image/jpeg',
+        'png'         => 'image/png',
+        'gif'         => 'image/gif',
+        'webp'        => 'image/webp',
+        'svg'         => 'image/svg+xml',
+        default       => mime_content_type($filePath) ?: 'application/octet-stream',
+    };
+    return response()->file($filePath, [
+        'Content-Type'  => $mimeType,
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('path', '.*')->name('storage.fallback');
+

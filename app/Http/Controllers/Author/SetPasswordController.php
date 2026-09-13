@@ -21,11 +21,15 @@ class SetPasswordController extends Controller
         $tokenRecord = AuthorApprovalToken::where('token', $request->query('token'))->first();
 
         if (! $tokenRecord) {
-            return view('author.token-invalid');
+            return redirect()->route('home')->with('error', 'Your author approval has been cancelled or the link is no longer valid.');
         }
 
         if ($tokenRecord->isExpired()) {
             return view('author.token-expired', ['user' => $tokenRecord->user]);
+        }
+
+        if (!$tokenRecord->user || $tokenRecord->user->role !== User::ROLE_AUTHOR || $tokenRecord->user->author_status !== User::STATUS_APPROVED) {
+            return redirect()->route('home')->with('error', 'Your author approval has been cancelled.');
         }
 
         return view('author.set-password', [
@@ -54,7 +58,7 @@ class SetPasswordController extends Controller
         $tokenRecord = AuthorApprovalToken::where('token', $request->token)->first();
 
         if (! $tokenRecord) {
-            return view('author.token-invalid');
+            return redirect()->route('home')->with('error', 'Your author approval has been cancelled or the link is no longer valid.');
         }
 
         if ($tokenRecord->isExpired()) {
@@ -62,6 +66,10 @@ class SetPasswordController extends Controller
         }
 
         $user = $tokenRecord->user;
+
+        if (!$user || $user->role !== User::ROLE_AUTHOR || $user->author_status !== User::STATUS_APPROVED) {
+            return redirect()->route('home')->with('error', 'Your author approval has been cancelled.');
+        }
 
         // Set the password and mark as fully activated
         $user->update([
@@ -71,7 +79,7 @@ class SetPasswordController extends Controller
         // Delete the used token
         $tokenRecord->delete();
 
-        return redirect()->route('login')->with('success', '🎉 Password berhasil dibuat! Akun author kamu telah aktif. Silakan login.');
+        return redirect()->route('login')->with('success', '🎉 Password successfully created! Your author account is now active. Please log in.');
     }
 
     /**
@@ -89,7 +97,7 @@ class SetPasswordController extends Controller
                     ->first();
 
         if (! $user) {
-            return back()->withErrors(['email' => 'Email tidak ditemukan atau akun belum disetujui sebagai author.']);
+            return redirect()->route('home')->with('error', 'Email was not found or your author approval has been cancelled.');
         }
 
         // Delete old token and create fresh one

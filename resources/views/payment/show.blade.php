@@ -118,7 +118,7 @@
             {{-- Back link --}}
             <div class="text-center mt-4">
                 <a href="{{ route('author.dashboard') }}" class="text-xs text-gray-400 hover:text-gray-600 transition-colors underline">
-                    Kembali ke Dashboard
+                    Back to Dashboard
                 </a>
             </div>
         </div>

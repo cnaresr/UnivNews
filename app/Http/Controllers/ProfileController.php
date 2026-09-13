@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\AvatarService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,15 +25,27 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request, AvatarService $avatarService): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->safe()->only(['name', 'email']));
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        // Handle avatar removal
+        if ($request->boolean('remove_avatar')) {
+            $avatarService->delete($user->avatar_path);
+            $user->avatar_path = null;
+        }
+        // Handle avatar upload and compression
+        elseif ($request->hasFile('avatar')) {
+            $path = $avatarService->uploadAndCompress($request->file('avatar'), $user->avatar_path);
+            $user->avatar_path = $path;
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -40,7 +53,7 @@ class ProfileController extends Controller
     /**
      * Delete the user's account.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, AvatarService $avatarService): RedirectResponse
     {
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
@@ -50,6 +63,7 @@ class ProfileController extends Controller
 
         Auth::logout();
 
+        $avatarService->delete($user->avatar_path);
         $user->delete();
 
         $request->session()->invalidate();

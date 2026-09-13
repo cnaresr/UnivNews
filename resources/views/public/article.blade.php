@@ -19,8 +19,8 @@
 @section('content')
 <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">
     
-    <!-- Tombol Back (Umum) -->
-    <a href="javascript:history.back()" class="absolute top-4 left-4 sm:top-12 sm:-left-4 md:-left-12 flex items-center justify-center w-8 h-8 bg-white border border-gray-200 text-gray-500 hover:text-[#8b1528] hover:bg-gray-50 rounded-full shadow-sm transition-all z-10" title="Kembali">
+    <!-- Back Button -->
+    <a href="javascript:history.back()" class="absolute top-4 left-4 sm:top-12 sm:-left-4 md:-left-12 flex items-center justify-center w-8 h-8 bg-white border border-gray-200 text-gray-500 hover:text-[#8b1528] hover:bg-gray-50 rounded-full shadow-sm transition-all z-10" title="Back">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>

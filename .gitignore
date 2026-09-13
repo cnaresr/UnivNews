@@ -23,10 +23,41 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# TestSprite
+# Temporary & Editor files
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+*.sublime-project
+*.sublime-workspace
+
+# Python cache & artifacts (TestSprite)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# TestSprite test plans, generated test cases, and reports
 /.testsprite
 /testsprite-plans
+/testsprite_tests
 
-# Local Agent Skills
+# Local Agent Skills & configs
 /.agents
+/.antigravity
+
+# SQLite journal files
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
