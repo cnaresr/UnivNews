@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-[#f8f9fa]">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full overflow-hidden bg-[#030919]">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,6 +10,8 @@
         <meta name="robots" content="noindex, nofollow">
     @endif
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23B71032'/><text x='50' y='50' font-family='sans-serif' font-weight='bold' font-size='70' fill='white' dominant-baseline='central' text-anchor='middle'>U</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,12 +45,12 @@
     $onboardingPending = ($onboardingUser && !$onboardingUser->has_completed_onboarding) ? 'true' : 'false';
     $completedTours = $onboardingUser ? ($onboardingUser->completed_page_tours ?? []) : [];
 @endphp
-<body class="h-full overflow-hidden antialiased bg-[#f4f6f8] text-[#1b1b1c]"
+<body class="h-full overflow-hidden antialiased bg-[#030919] text-[#1b1b1c]"
       data-onboarding-pending="{{ $onboardingPending }}"
       data-user-role="{{ $onboardingRole ?? '' }}"
       data-completed-tours="{{ json_encode($completedTours) }}"
       data-page-tour-id="@yield('page_tour_id')">
-    <div class="flex h-screen overflow-hidden" x-data="{ mobileSidebarOpen: false }">
+    <div class="flex h-screen h-[100dvh] w-full overflow-hidden bg-[#f8f9fa]" x-data="{ mobileSidebarOpen: false }">
         
         <!-- Mobile Sidebar Backdrop -->
         <div x-show="mobileSidebarOpen" 
@@ -58,7 +60,7 @@
 
         <!-- Sidebar -->
         <aside :class="mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'" 
-               class="fixed inset-y-0 left-0 z-50 w-64 bg-[#030919] text-white transition-transform duration-200 ease-in-out md:static md:translate-x-0 flex flex-col flex-shrink-0 select-none shadow-xl md:shadow-none">
+               class="fixed inset-y-0 left-0 z-50 w-64 h-full min-h-screen md:h-screen md:sticky md:top-0 bg-[#030919] text-white transition-transform duration-200 ease-in-out md:translate-x-0 flex flex-col flex-shrink-0 select-none shadow-xl md:shadow-none">
             
             <!-- Logo Header -->
             <div class="p-6 border-b border-gray-800/80">
@@ -255,8 +257,8 @@
                     <div class="flex items-center gap-2.5">
                         <span class="text-xs font-sans text-gray-600 hidden sm:inline-block">Logged in as: <strong class="text-navy font-semibold text-gray-900">{{ $currentUser->name }}</strong></span>
                         <div class="w-8 h-8 rounded-full bg-navy text-white flex items-center justify-center font-bold text-xs overflow-hidden border border-gray-200">
-                            @if($currentUser->avatar_path)
-                                <img src="{{ asset($currentUser->avatar_path) }}" alt="{{ $currentUser->name }}" class="w-full h-full object-cover">
+                            @if($currentUser->hasAvatar())
+                                <img src="{{ $currentUser->avatar_url }}" alt="{{ $currentUser->name }}" class="w-full h-full object-cover">
                             @else
                                 <span class="uppercase">{{ substr($currentUser->name, 0, 2) }}</span>
                             @endif

@@ -149,6 +149,37 @@ class User extends Authenticatable
         return $this->author_status === self::STATUS_REJECTED;
     }
 
+    // ── Avatar Helpers ─────────────────────────────────────────────────────
+
+    /**
+     * Check whether the user has a custom avatar.
+     */
+    public function hasAvatar(): bool
+    {
+        return !empty($this->avatar_path);
+    }
+
+    /**
+     * Get the public URL for the user's avatar.
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        if (empty($this->avatar_path)) {
+            return '';
+        }
+
+        if (\Illuminate\Support\Str::startsWith($this->avatar_path, ['http://', 'https://'])) {
+            return $this->avatar_path;
+        }
+
+        $cleanPath = ltrim($this->avatar_path, '/');
+        if (\Illuminate\Support\Str::startsWith($cleanPath, 'storage/')) {
+            $cleanPath = substr($cleanPath, 8);
+        }
+
+        return '/storage/' . $cleanPath;
+    }
+
     // ── Onboarding Helpers ─────────────────────────────────────────────────
 
     /**

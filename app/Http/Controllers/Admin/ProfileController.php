@@ -86,18 +86,24 @@ class ProfileController extends Controller
         return view('admin.settings', compact('activityLog'));
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request, \App\Services\AvatarService $avatarService): RedirectResponse
     {
         $user = Auth::guard('admin')->user();
 
         $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'preferred_name'  => 'nullable|string|max:255',
-            'email'           => 'required|email|max:255|unique:users,email,' . $user->id,
+            'name'             => 'required|string|max:255',
+            'preferred_name'   => 'nullable|string|max:255',
+            'email'            => 'required|email|max:255|unique:users,email,' . $user->id,
+            'avatar'           => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'remove_avatar'    => 'nullable',
             'social_instagram' => 'nullable|string|max:255',
             'social_twitter'   => 'nullable|string|max:255',
             'social_threads'   => 'nullable|string|max:255',
             'social_linkedin'  => 'nullable|string|max:255',
+        ], [
+            'avatar.image' => 'The profile photo must be a valid image file.',
+            'avatar.mimes' => 'The profile photo must be a file of type: PNG or JPG.',
+            'avatar.max'   => 'The profile photo may not be greater than 2MB in size.',
         ]);
 
         // Build social links array
@@ -108,12 +114,25 @@ class ProfileController extends Controller
             'linkedin'  => $request->input('social_linkedin'),
         ]);
 
-        $user->update([
+        $updateData = [
             'name'           => $validated['name'],
             'preferred_name' => $validated['preferred_name'] ?? null,
             'email'          => $validated['email'],
             'social_links'   => !empty($socialLinks) ? $socialLinks : null,
-        ]);
+        ];
+
+        // Handle avatar removal
+        if ($request->boolean('remove_avatar')) {
+            $avatarService->delete($user->avatar_path);
+            $updateData['avatar_path'] = null;
+        }
+        // Handle avatar upload and compression
+        elseif ($request->hasFile('avatar')) {
+            $path = $avatarService->uploadAndCompress($request->file('avatar'), $user->avatar_path);
+            $updateData['avatar_path'] = $path;
+        }
+
+        $user->update($updateData);
 
         return back()->with('success', 'Profile updated successfully.');
     }

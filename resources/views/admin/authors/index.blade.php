@@ -215,7 +215,9 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            @if($user->author_status === 'approved')
+                            @if($user->approvalToken)
+                                <span class="px-2.5 py-0.5 bg-amber-50 text-amber-800 font-semibold border border-amber-200 text-[11px]" title="Awaiting password creation & verification">Awaiting Setup</span>
+                            @elseif($user->author_status === 'approved')
                                 <span class="px-2.5 py-0.5 bg-green-100 text-green-800 font-semibold border border-green-200 text-[11px]">Active</span>
                             @elseif($user->author_status === 'suspended')
                                 <span class="px-2.5 py-0.5 bg-red-100 text-red-800 font-semibold border border-red-200 text-[11px]">Suspended</span>
@@ -227,6 +229,21 @@
                             {{ $user->articles_count ?? $user->articles()->count() }} stories
                         </td>
                         <td class="px-6 py-4 text-right space-x-2">
+                            @if($user->approvalToken)
+                                <form action="{{ route('admin.authors.cancel-approval', $user) }}" 
+                                      method="POST" 
+                                      class="inline-block"
+                                      data-confirm-title="Cancel author approval?"
+                                      data-confirm-description="Are you sure you want to cancel the author approval for &quot;{{ addslashes($user->name) }}&quot;? The user has not completed setup yet and will be reverted to Reader."
+                                      data-confirm-btn="Cancel Approval"
+                                      data-confirm-variant="warning">
+                                    @csrf
+                                    <button type="submit" class="text-orange-600 hover:text-orange-800 font-semibold">
+                                        Cancel Approval
+                                    </button>
+                                </form>
+                            @endif
+
                             @if($user->author_status === 'suspended')
                                 <form action="{{ route('admin.authors.approve', $user) }}" method="POST" class="inline-block">
                                     @csrf

@@ -96,11 +96,11 @@ class ApplyController extends Controller
             return view('author.apply-approved', compact('user'));
         }
 
-        // If they haven't actually applied, redirect to form
-        if ($user->author_status !== User::STATUS_PENDING) {
-            return redirect()->route('author.apply');
+        if ($user->author_status === User::STATUS_PENDING) {
+            return view('author.apply-confirmation', compact('user'));
         }
-        
-        return view('author.apply-confirmation', compact('user'));
+
+        // If approval was cancelled or status is none/rejected, redirect to main page/dashboard
+        return redirect()->route('dashboard')->with('info', 'Your author application is not active or approval was cancelled.');
     }
 }

@@ -23,7 +23,69 @@
     </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
+         x-data="{
+             previewUrl: '{{ auth()->user()->avatar_url }}',
+             hasAvatar: {{ auth()->user()->hasAvatar() ? 'true' : 'false' }},
+             removeAvatar: false,
+             newPhotoSelected: false,
+             errorMessage: '',
+             validateAndPreview(e) {
+                 const file = e.target.files[0];
+                 if (!file) return;
+
+                 this.errorMessage = '';
+
+                 // Format validation (Strictly PNG or JPG)
+                 const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                 const fileExt = file.name.split('.').pop().toLowerCase();
+                 const validExts = ['jpg', 'jpeg', 'png'];
+
+                 if (!validTypes.includes(file.type) && !validExts.includes(fileExt)) {
+                     const msg = 'Invalid format! Only PNG or JPG photos are allowed.';
+                     this.errorMessage = msg;
+                     if (window.showWarningAlert) {
+                         window.showWarningAlert('Format Warning', msg);
+                     } else {
+                         alert(msg);
+                     }
+                     e.target.value = '';
+                     return;
+                 }
+
+                 // Maximum size: 2MB (2 * 1024 * 1024 = 2,097,152 bytes)
+                 if (file.size > 2 * 1024 * 1024) {
+                     const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                     const msg = 'Photo exceeds the 2MB size limit (' + sizeMB + ' MB). Please choose a smaller file.';
+                     this.errorMessage = msg;
+                     if (window.showWarningAlert) {
+                         window.showWarningAlert('File Size Warning', msg);
+                     } else {
+                         alert(msg);
+                     }
+                     e.target.value = '';
+                     return;
+                 }
+
+                 this.removeAvatar = false;
+                 this.newPhotoSelected = true;
+                 this.previewUrl = URL.createObjectURL(file);
+                 if (window.showSuccessAlert) {
+                     window.showSuccessAlert('Photo Selected', 'Click Save Changes to apply your new profile photo.');
+                 }
+             },
+             removePhoto() {
+                 this.previewUrl = '';
+                 this.removeAvatar = true;
+                 this.newPhotoSelected = false;
+                 this.errorMessage = '';
+                 const input = document.getElementById('author_avatar_input');
+                 if (input) input.value = '';
+                 if (window.showInfoAlert) {
+                     window.showInfoAlert('Photo Marked for Removal', 'Click Save Changes to permanently remove your photo.');
+                 }
+             }
+         }">
         
         <!-- Left Column: Profile Card & Account Status -->
         <div class="lg:col-span-4 space-y-6">
@@ -31,16 +93,70 @@
             <!-- Main Profile Summary Card -->
             <div class="bg-white border border-gray-200 p-6 text-center shadow-sm">
                 <!-- Avatar -->
-                <div class="w-32 h-40 mx-auto bg-gray-100 border border-gray-200 overflow-hidden shadow-inner flex items-center justify-center mb-4">
-                    @if(auth()->user()->avatar_path)
-                        <img src="{{ asset(auth()->user()->avatar_path) }}" alt="{{ auth()->user()->name }}" class="w-full h-full object-cover">
-                    @else
+                <div class="relative group w-32 h-40 mx-auto bg-gray-100 border border-gray-200 overflow-hidden shadow-inner flex items-center justify-center mb-3">
+                    <template x-if="previewUrl">
+                        <img :src="previewUrl" alt="{{ auth()->user()->name }}" class="w-full h-full object-cover">
+                    </template>
+                    <template x-if="!previewUrl">
                         <div class="w-full h-full bg-slate-200 flex flex-col items-center justify-center text-slate-400">
                             <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                             </svg>
                         </div>
-                    @endif
+                    </template>
+
+                    <!-- Quick Change Overlay -->
+                    <button type="button" 
+                            @click="document.getElementById('author_avatar_input').click()"
+                            class="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity cursor-pointer text-xs font-semibold">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span>Change</span>
+                    </button>
+                </div>
+
+                <!-- Avatar Actions -->
+                <div class="mb-4 space-y-2">
+                    <div class="flex items-center justify-center gap-2">
+                        <button type="button" 
+                                @click="document.getElementById('author_avatar_input').click()"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f4f6f8] hover:bg-[#eef0f2] border border-gray-300 text-gray-700 text-xs font-semibold uppercase tracking-wider transition-colors">
+                            <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            <span>Change Photo</span>
+                        </button>
+
+                        <button type="button" 
+                                x-show="previewUrl"
+                                @click="removePhoto()"
+                                class="inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:text-red-800 hover:bg-red-50 transition-colors">
+                            Remove
+                        </button>
+                    </div>
+
+                    <!-- Size / Format Help text -->
+                    <p class="text-[11px] text-gray-500 font-sans">
+                        PNG or JPG &bull; Max <strong>2MB</strong> &bull; Auto compressed
+                    </p>
+
+                    <template x-if="newPhotoSelected">
+                        <div class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                            <span>Photo selected &mdash; click Save Changes</span>
+                        </div>
+                    </template>
+                    <template x-if="removeAvatar">
+                        <div class="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                            <span>Removed &mdash; click Save Changes</span>
+                        </div>
+                    </template>
+                    <template x-if="errorMessage">
+                        <p class="text-[11px] font-semibold text-red-600 font-sans" x-text="errorMessage"></p>
+                    </template>
                 </div>
 
                 <!-- User Name & Title -->
@@ -132,9 +248,19 @@
             <div class="bg-white border border-gray-200 shadow-sm p-6 lg:p-8">
                 <h2 class="text-xl font-bold font-heading text-[#00081e] mb-6">Edit Profile</h2>
 
-                <form method="POST" action="{{ route('author.settings.update') }}">
+                <form id="author-profile-form" method="POST" action="{{ route('author.settings.update') }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
+
+                    <input type="file" 
+                           id="author_avatar_input" 
+                           name="avatar" 
+                           accept="image/png,image/jpeg" 
+                           class="hidden" 
+                           @change="validateAndPreview($event)">
+                    <input type="hidden" 
+                           name="remove_avatar" 
+                           :value="removeAvatar ? '1' : '0'">
 
                     <div class="space-y-6">
                         <!-- Full Name & Preferred Name -->

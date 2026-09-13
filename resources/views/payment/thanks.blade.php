@@ -106,11 +106,11 @@
             <div class="space-y-3">
                 <a href="{{ route('author.dashboard') }}" id="btn-back-dashboard"
                    class="w-full py-3.5 bg-[#00081e] text-white text-xs font-bold uppercase tracking-widest text-center block hover:bg-[#0f1f4a] transition-colors">
-                    Kembali ke Dashboard
+                    Back to Dashboard
                 </a>
                 <a href="{{ route('home') }}"
                    class="w-full py-3 border border-gray-300 text-gray-600 text-xs font-bold uppercase tracking-widest text-center block hover:bg-gray-50 transition-colors">
-                    Ke Beranda
+                    Back to Home
                 </a>
             </div>
         </div>

@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Apply for Author Access - University News</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23B71032'/><text x='50' y='50' font-family='sans-serif' font-weight='bold' font-size='70' fill='white' dominant-baseline='central' text-anchor='middle'>U</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,16 +41,19 @@
 </head>
 <body class="h-full flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 bg-[#fcf8f9] text-[#1b1b1c]">
     
-    <div class="max-w-xl w-full bg-white border border-[#c5c6cf] p-8 sm:p-10 shadow-sm relative">
-        
-        <!-- Header Cap Icon -->
-        <div class="flex justify-center mb-6">
-            <div class="w-14 h-14 rounded-full bg-[#00081e] flex items-center justify-center text-white shadow-sm">
-                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
-                </svg>
+    <!-- Brand Logo Header -->
+    <div class="max-w-xl w-full mb-6 flex items-center justify-center">
+        <a href="{{ route('home') }}" class="inline-flex items-center space-x-2.5 group">
+            <div class="bg-crimson text-white w-9 h-9 flex items-center justify-center font-heading font-bold text-xl rounded shadow transition-transform group-hover:scale-105">
+                U
             </div>
-        </div>
+            <span class="font-heading font-bold text-xl tracking-tight text-[#00081e]">
+                University<span class="font-normal text-gray-500">News</span>
+            </span>
+        </a>
+    </div>
+
+    <div class="max-w-xl w-full bg-white border border-[#c5c6cf] p-8 sm:p-10 shadow-sm relative">
 
         <div class="text-center mb-8">
             <h1 class="text-2xl font-bold font-heading text-[#00081e]">Apply for Author Access</h1>
