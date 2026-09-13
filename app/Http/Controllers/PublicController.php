@@ -6,6 +6,7 @@ use App\Models\Article;
 use App\Models\Category;
 use App\Models\Tag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PublicController extends Controller
 {
@@ -207,30 +208,106 @@ class PublicController extends Controller
 
     public function search(Request $request)
     {
-        $query = $request->input('q');
-        
-        $articles = Article::where('status', 'published')
+        $query = trim((string)$request->input('q'));
+        $sort = $request->input('sort', 'relevance');
+        if (!in_array($sort, ['relevance', 'latest'])) {
+            $sort = 'relevance';
+        }
+        $selectedCategory = $request->input('category', 'all');
+
+        $driver = DB::connection()->getDriverName();
+
+        $articles = Article::with(['category', 'tags', 'user'])
+            ->where('status', 'published')
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
 
         if (!empty($query)) {
-            $terms = array_filter(explode(' ', $query));
-            $articles->where(function($q) use ($terms) {
-                foreach ($terms as $term) {
-                    $q->where(function($subQ) use ($term) {
-                        $subQ->where('title', 'ilike', "%{$term}%")
-                             ->orWhere('excerpt', 'ilike', "%{$term}%")
-                             ->orWhere('content', 'ilike', "%{$term}%")
-                             ->orWhereHas('tags', fn($t) => $t->where('name', 'ilike', "%{$term}%"));
-                    });
+            if ($driver === 'pgsql') {
+                $safeRegex = trim(preg_replace('/[^\p{L}\p{N}\s]/u', '', $query));
+                if (empty($safeRegex)) {
+                    $safeRegex = 'a^';
                 }
-            });
+
+                $vectorSql = "
+                    setweight(to_tsvector('english', coalesce(articles.title, '')), 'A') ||
+                    setweight(to_tsvector('english', coalesce(articles.excerpt, '')), 'B') ||
+                    setweight(to_tsvector('english', regexp_replace(coalesce(articles.content, ''), '<[^>]+>', ' ', 'g')), 'D')
+                ";
+
+                $articles->select('articles.*')
+                    ->selectRaw("
+                        (
+                            ts_rank(({$vectorSql}), websearch_to_tsquery('english', ?)) * 10
+                            + CASE WHEN LOWER(articles.title) = LOWER(?) THEN 100 ELSE 0 END
+                            + CASE WHEN articles.title ILIKE (? || '%') THEN 50 ELSE 0 END
+                            + CASE WHEN articles.title ~* ('\\\\y' || ? || '\\\\y') THEN 40 ELSE 0 END
+                            + CASE WHEN length(?) >= 4 AND articles.title ILIKE ('%' || ? || '%') THEN 25 ELSE 0 END
+                            + CASE WHEN length(?) >= 4 AND articles.excerpt ILIKE ('%' || ? || '%') THEN 10 ELSE 0 END
+                            + CASE WHEN EXISTS (
+                                SELECT 1 FROM article_tag 
+                                JOIN tags ON tags.id = article_tag.tag_id 
+                                WHERE article_tag.article_id = articles.id AND tags.name ~* ('\\\\y' || ? || '\\\\y')
+                            ) THEN 30 ELSE 0 END
+                        ) as relevance_score
+                    ", [$query, $query, $query, $safeRegex, $query, $query, $query, $query, $safeRegex])
+                    ->selectRaw("
+                        ts_headline('english', regexp_replace(articles.content, '<[^>]+>', ' ', 'g'),
+                                    websearch_to_tsquery('english', ?),
+                                    'StartSel=<mark>, StopSel=</mark>, MaxWords=35, MinWords=15') as search_snippet
+                    ", [$query])
+                    ->where(function($subQ) use ($vectorSql, $query, $safeRegex) {
+                        $subQ->whereRaw("({$vectorSql}) @@ websearch_to_tsquery('english', ?)", [$query])
+                             ->orWhere('articles.title', '~*', "\\y{$safeRegex}")
+                             ->orWhereHas('tags', fn($t) => $t->where('name', '~*', "\\y{$safeRegex}\\y"))
+                             ->orWhereHas('category', fn($c) => $c->where('name', '~*', "\\y{$safeRegex}\\y"));
+                    });
+            } else {
+                // DB-agnostic fallback (MySQL / SQLite)
+                $articles->select('articles.*')
+                    ->selectRaw("
+                        (
+                            CASE WHEN LOWER(articles.title) = LOWER(?) THEN 100 ELSE 0 END
+                            + CASE WHEN articles.title LIKE (? || '%') THEN 50 ELSE 0 END
+                            + CASE WHEN articles.title LIKE ('%' || ? || '%') THEN 25 ELSE 0 END
+                            + CASE WHEN articles.excerpt LIKE ('%' || ? || '%') THEN 10 ELSE 0 END
+                            + CASE WHEN articles.content LIKE ('%' || ? || '%') THEN 5 ELSE 0 END
+                        ) as relevance_score
+                    ", [$query, $query, $query, $query, $query])
+                    ->where(function($subQ) use ($query) {
+                        $subQ->where('articles.title', 'like', "%{$query}%")
+                             ->orWhere('articles.excerpt', 'like', "%{$query}%")
+                             ->orWhere('articles.content', 'like', "%{$query}%")
+                             ->orWhereHas('tags', fn($t) => $t->where('name', 'like', "%{$query}%"))
+                             ->orWhereHas('category', fn($c) => $c->where('name', 'like', "%{$query}%"));
+                    });
+            }
         }
 
-        $articles = $articles->orderBy('published_at', 'desc')
-            ->paginate(10);
+        // Category filter
+        if (!empty($selectedCategory) && $selectedCategory !== 'all') {
+            $articles->whereHas('category', fn($c) => $c->where('slug', $selectedCategory));
+        }
 
-        return view('public.search', compact('articles', 'query'));
+        // Sorting
+        if ($sort === 'latest') {
+            $articles->orderByDesc('published_at');
+        } else {
+            if (!empty($query)) {
+                $articles->orderByDesc('relevance_score')->orderByDesc('published_at');
+            } else {
+                $articles->orderByDesc('published_at');
+            }
+        }
+
+        $articles = $articles->paginate(10)->withQueryString();
+
+        // Categories for filter pills with published count
+        $categories = Category::withCount(['articles' => fn($q) => $q->where('status', 'published')->whereNotNull('published_at')->where('published_at', '<=', now())])
+            ->orderBy('name')
+            ->get();
+
+        return view('public.search', compact('articles', 'query', 'sort', 'selectedCategory', 'categories'));
     }
 
     public function tag($name)
